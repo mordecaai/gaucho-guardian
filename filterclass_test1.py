@@ -9,19 +9,20 @@ If a course is rejected, it provides specific reasons.
 """
 
 # --- CONFIGURATION (Change these to your needs) ---
-TARGET_SUBJECT = "ECE"
+TARGET_SUBJECT = ("phys").upper()  # Set to the desired subject area (e.g., "MATH", "PHYS", "ECE", etc.)
 TARGET_GE = None  # Set to None (not a string) to skip GE filtering
 REQUIRE_ONLINE = False  # Set to True to require online courses, False to ignore this filter
 
 
-# Blackout windows (T=Tuesday, R=Thursday)
+# Blackout windows (M=Monday, T=Tuesday, W=Wednesday, R=Thursday, F=Friday)
 BLACKOUT_SCHEDULE = {
-    "M": [("08:00", "09:00")],
-    "T": [("12:00", "14:00")],
-    "W": [("08:00", "09:00")],
+    "M": [("08:00", "09:00"), ("12:00", "13:30"), ("17:00", "19:00")],
+    "T": [("12:00", "14:00"), ("15:30", "16:45")],
+    "W": [("08:00", "09:00"), ("12:00", "13:30")],
     "R": [("12:00", "14:00")],
-    "F": [("08:00", "09:00")]
+    "F": []
 }
+
 
 def is_overlapping(start1, end1, start2, end2):
     """Checks if two 24hr time ranges overlap."""
@@ -147,7 +148,7 @@ def test_single_json(file_path):
 #test_single_json('class_11593.json')  # Example file name, change as needed
 
 # Instead of one file, do a list:
-my_files = ['class_11593.json', 'class_22841.json', 'class_09932.json']
+my_files = ['class_11593.json', 'class_29496.json', 'class_38687.json']
 
 for file in my_files:
     test_single_json(file)
