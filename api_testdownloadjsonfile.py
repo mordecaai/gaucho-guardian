@@ -8,7 +8,7 @@ headers = {
     'ucsb-api-key': MY_API_KEY
 }
 date = "20261"
-class_code = "11593"
+class_code = "38687"
 url = f"https://api.ucsb.edu/academics/curriculums/v3/classes/{date}/{class_code}?includeClassSections=true"
 
 def download_class_data(url, headers):
