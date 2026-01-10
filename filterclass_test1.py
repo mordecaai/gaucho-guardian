@@ -9,9 +9,10 @@ If a course is rejected, it provides specific reasons.
 """
 
 # --- CONFIGURATION (Change these to your needs) ---
-TARGET_SUBJECT = "CMPSC"
-TARGET_GE = "C"  # Set to None to skip GE filtering
-REQUIRE_ONLINE = True
+TARGET_SUBJECT = "ECE"
+TARGET_GE = None  # Set to None (not a string) to skip GE filtering
+REQUIRE_ONLINE = False  # Set to True to require online courses, False to ignore this filter
+
 
 # Blackout windows (T=Tuesday, R=Thursday)
 BLACKOUT_SCHEDULE = {
@@ -112,9 +113,16 @@ def test_single_json(file_path):
         code = section.get("enrollCode")
         
         # Space Check
-        if section.get("enrolledTotal", 0) >= section.get("maxEnroll", 0):
-            rejection_reasons.append(f"Section {code}: Full ({section.get('enrolledTotal')}/{section.get('maxEnroll')})")
+        # Using 'or 0' ensures that if the value is None, it defaults to 0
+        enrolled = section.get("enrolledTotal") or 0
+        max_cap = section.get("maxEnroll") or 0
+
+        
+        
+        if enrolled >= max_cap:
+            rejection_reasons.append(f"Section {code}: Full ({enrolled}/{max_cap})")
             continue
+        
             
         # Conflict Check
         conflict, reason = has_time_conflict(section)
@@ -136,3 +144,10 @@ def test_single_json(file_path):
 
 # To run, ensure your JSON file is named 'course.json' or change the name here:
 # test_single_json('course.json')
+#test_single_json('class_11593.json')  # Example file name, change as needed
+
+# Instead of one file, do a list:
+my_files = ['class_11593.json', 'class_22841.json', 'class_09932.json']
+
+for file in my_files:
+    test_single_json(file)
