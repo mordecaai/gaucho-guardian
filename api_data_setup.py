@@ -1,6 +1,7 @@
 import requests
 
-MY_API_KEY = 'RoAsofJyOqXFsEfFRCrWeswcvcVXKKGc'
+MY_API_KEY = input("Enter your API key: ")
+
 headers = {
     'accept': 'text/plain',
     'ucsb-api-key': MY_API_KEY
@@ -16,7 +17,7 @@ def isValidCode(year, quarter, class_code):
   if response.status_code == 200:
       data = response.json()
       if(data): #check if data exists for pulling correct codes
-        print(data.get("Title")) 
+        print(data.get("title")) 
         return True
         
       else:
