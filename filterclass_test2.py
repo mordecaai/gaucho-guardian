@@ -110,72 +110,84 @@ def check_class(data, blackout):
 
 # --- 4. MAIN EXECUTION ---
 
-# Step A: Build the 'Wall' of busy times
+print("🛠️ Step 1: Building Blackout Schedule from 'current_classes'...")
 current_blackout = generate_blackout_from_folder(CURRENT_CLASSES_FOLDER)
 
-# String arrays: Good for logs and quick summaries
+# String arrays for quick logs
 true_array = []
 false_array = []
 
-# Object arrays: Good for the Ranking System (contains the whole JSON)
-true_data_array = []
-false_data_array = []
+# Data arrays for True results (Passed)
+true_raw_json = []        # Unchanged
+true_modified_json = []   # With extra data on sections + section times
 
-# Get all files in the potential folder
+# Data arrays for False results (Rejected)
+false_raw_json = []       # Unchanged
+false_modified_json = []  # With rejection reasons
+
+print("\n🔍 Step 2: Checking potential classes against schedule...")
 potential_files = [f for f in os.listdir(POTENTIAL_CLASSES_FOLDER) if f.endswith(".json")]
 
 for filename in potential_files:
     path = os.path.join(POTENTIAL_CLASSES_FOLDER, filename)
     with open(path, 'r') as f:
-        data = json.load(f) # Load the actual dictionary
+        data = json.load(f)
         course_id = data.get("courseId", "Unknown")
         
         works, sections, reasons = check_class(data, current_blackout)
         
         if works:
-            # Join the list of valid sections into a string for the header print
             section_str = ", ".join(sections)
             print(f"✅ {course_id} WORKS! (Valid sections: {section_str})")
             
-            # --- NEW: TIME BREAKDOWN SECTION ---
-            # We loop through all sections in the original JSON
-            # If the section is one of our "valid" ones, we print its specific times
+            # --- Extract times for console and modified JSON ---
+            readable_times = {} 
             for section in data.get("classSections", []):
                 code = section.get("enrollCode")
                 if code in sections:
-                    times = []
+                    times_list = []
                     for loc in (section.get("timeLocations") or []):
-                        d = loc.get("days", "").strip()
-                        s = loc.get("beginTime", "")
-                        e = loc.get("endTime", "")
-                        times.append(f"{d} {s}-{e}")
+                        d, s, e = loc.get("days", "").strip(), loc.get("beginTime", ""), loc.get("endTime", "")
+                        times_list.append(f"{d} {s}-{e}")
                     
-                    # Print the indented time summary for this specific section
-                    print(f"   👉 Section {code}: {' | '.join(times)}")
-            # ------------------------------------
+                    time_summary = " | ".join(times_list)
+                    readable_times[code] = time_summary
+                    print(f"   👉 Section {code}: {time_summary}")
             
-            # Create a combined object for the ranking team
-            # This attaches the specific "passing codes" to the full course data
-            data_with_results = data.copy()
-            data_with_results["passingEnrollCodes"] = sections
-            
+            # Update Arrays
             true_array.append(course_id)
-            true_data_array.append(data_with_results)
+            true_raw_json.append(data)
+            
+            mod_data = data.copy()
+            mod_data["passingEnrollCodes"] = sections
+            mod_data["sectionTimesSummary"] = readable_times
+            true_modified_json.append(mod_data)
+
         else:
-            # Join the rejection reasons (e.g., "3 Full, 1 Conflict")
             reason_str = ", ".join(reasons) if reasons else "Filter Mismatch"
             print(f"❌ {course_id} REJECTED ({reason_str})")
+            
             false_array.append(course_id)
-            false_data_array.append(data) # Store the entire dictionary here
+            false_raw_json.append(data)
+            
+            mod_fail = data.copy()
+            mod_fail["rejectionReasons"] = reasons
+            false_modified_json.append(mod_fail)
 
 # --- 5. FINAL OUTPUT & EXPORT ---
-print("\n" + "="*50)
+print("\n")
+print("=" * 50) #adding headers to separate the summary from the more detailed logs
 print(f"RESULTS SUMMARY:")
 print(f"Passed: {true_array}")
 print(f"Failed: {false_array}")
-print("="*50)
+print("=" * 50) #adding footers
 
-# Export the 'True Data' to a single file so your team can easily import it.
-with open("passed_courses_full_data.json", "w") as f:
-    json.dump(true_data_array, f, indent=4)
-    print("\n📄 Full data for valid courses exported to 'passed_courses_full_data.json'")
+# Master Export
+master_results = {
+    "passed": {"raw": true_raw_json, "modified": true_modified_json},
+    "failed": {"raw": false_raw_json, "modified": false_modified_json}
+}
+
+with open("master_course_results.json", "w") as f:
+    json.dump(master_results, f, indent=4)
+    print("\n📄 Master data exported to 'master_course_results.json'")
